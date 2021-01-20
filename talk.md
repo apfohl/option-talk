@@ -23,6 +23,26 @@
 
 ---
 
+# Example
+
+```
+public interface IStarWarsApi {
+    Task<Person> Person(int number);
+    Task<Film> Film(int number);
+}
+
+public sealed class Person {
+    public string Name { get; }
+    public IEnumerable<int> Films { get; }
+}
+
+public sealed class Film {
+    public string Title { get; }
+}
+```
+
+---
+
 # What problems are we trying to solve?
 
 ^
@@ -33,5 +53,3 @@
 - Side effects
 ^
 - NULL
-
----
