@@ -2,6 +2,17 @@
 %author: Andreas Pfohl (GitHub: @apfohl / Twitter: @andreaspfohl)
 %date: 2021-01-22
 
+```
+Option<TechTalk> talk = bridgefield.NextTechTalk();
+  
+talk.Match(
+    some: talk => talk.StartSlides(),
+    none: () => Console.WriteLine("No talk available.")
+);
+```
+
+---
+
 -> # Option<T> <-
 
 -> How to use monads in C# <-
