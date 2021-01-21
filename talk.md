@@ -56,12 +56,12 @@
 
 # Example
 
-    var person = Api.FindPerson("Luke Skywalker");
+    var person = FindPerson("Luke Skywalker");
      
     if (person != null)
     {
         var lightsaber =
-            Api.FindLightsaber(person.Lightsaber);
+            FindLightsaber(person.Lightsaber);
          
         Console.WriteLine(lightsaber != null
             ? lightsaber.Color
