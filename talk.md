@@ -2,14 +2,12 @@
 %author: Andreas Pfohl (GitHub: @apfohl / Twitter: @andreaspfohl)
 %date: 2021-01-22
 
-```
-Option<TechTalk> talk = bridgefield.NextTechTalk();
-  
-talk.Match(
-    some: talk => talk.StartSlides(),
-    none: () => Console.WriteLine("No talk available.")
-);
-```
+    Option<TechTalk> talk = bridgefield.NextTechTalk();
+    
+    talk.Match(
+        some: talk => talk.StartSlides(),
+        none: () => Console.WriteLine("No talk available.")
+    );
 
 ---
 
@@ -36,40 +34,39 @@ talk.Match(
 
 # Example
 
-```
-public interface IApi {
-    Person FindPerson(string name);
-    Lightsaber FindLightsaber(int id);
-}
 
-public sealed class Person {
-    public string Name { get; }
-    public int Lightsaber { get; }
-}
+    public interface IApi {
+        Person FindPerson(string name);
+        Lightsaber FindLightsaber(int id);
+    }
+     
+    public sealed class Person {
+        public string Name { get; }
+        public string Species { get; }
+        public int Lightsaber { get; }
+    }
+     
+    public sealed class Lightsaber {
+        public int Id { get; }
+        public string Color { get; }
+    }
 
-public sealed class Lightsaber {
-    public int Id { get; }
-    public string Color { get; }
-}
-```
 
 ---
 
 # Example
 
-```
-var person = Api.FindPerson("Luke Skywalker");
+    var person = Api.FindPerson("Luke Skywalker");
      
-if (person != null)
-{
-    var lightsaber =
-        Api.FindLightsaber(person.Lightsaber);
-     
-    Console.WriteLine(lightsaber != null
-        ? lightsaber.Color
-        : "Lightsaber not found!");
-}
-```
+    if (person != null)
+    {
+        var lightsaber =
+            Api.FindLightsaber(person.Lightsaber);
+         
+        Console.WriteLine(lightsaber != null
+            ? lightsaber.Color
+            : "Lightsaber not found!");
+    }
 
 ---
 
@@ -102,7 +99,7 @@ if (person != null)
 ^
 - Always defined state
 ^
-- Methods to work consistent and
+- Methods to work consistently and
 safely with contained values
 
 ---
@@ -144,3 +141,258 @@ value to a new monad instance
       
     }
 
+---
+
+# Using Monad<T>
+
+^
+    var monad = new Monad<string>("May the force be with you!");
+^
+      
+    monad.Bind(s => new Monad<string>($"{s} Live long and prosper!"));
+
+^
+\-> Hey Andreas, this is totally useless!
+
+^
+\-> You're right! But it serves as the foundation:
+
+- Generic Type ✓
+- Container for your values ✓
+- Immutable ✓
+- Easy to get in and yet impossible to get out ✓
+- Always defined state ✓
+- Methods to work consistently and
+safely with contained values ✓
+
+---
+
+# What problems are we trying to solve?
+
+- Context ✓
+- Composition ✓
+- Side effects
+- NULL
+
+---
+
+# Making monads useful with Maybe<T>
+
+^
+- `Maybe<T>` is a monad like `Monad<T>`
+^
+- Instance can only be in two states:
+^
+  - Just T value
+^
+  - Nothing
+^
+- Needs two constructors:
+^
+  - `Maybe<T> Just(T value);`
+^
+  - `Maybe<T> Nothing();`
+^
+- Supports `Bind()` for composition
+  - `Maybe<TResult> Bind<TResult>(Func<T, Maybe<TResult>> f);`
+
+^
+\-> Hey Andreas, that's still not useful!
+
+---
+
+# Introducing Match() AKA getting out of the monad
+
+^
+\-> After construction the value is monadic.
+^
+
+- In context
+- Immutable
+- Always defined state
+- Easy to get in and hard to get out <-
+^
+- Provide a method to work consistent and safe
+with the contained value
+^
+
+    TResult Match<TResult>(
+        Func<T, TResult> just,
+        Func<TResult> nothing
+    );
+
+---
+
+# Using Match()
+
+^
+`Person FindPerson(string name);`
+^
+
+↓
+
+`Maybe<Person> FindPerson(string name);`
+^
+
+\-> Success: `Maybe<string>.Just(new Person(…));`
+^
+
+\-> Failure: `Maybe<string>.Nothing();`
+^
+
+
+    TResult Match<TResult>(Func<T, TResult> just, Func<TResult> nothing);
+^
+
+
+    FindPerson("Luke Skywalker")
+^
+        .Match(
+^
+            person => Console.WriteLine(person.Species),
+^
+            () => Console.WriteLine("Person not found!")
+        );
+
+---
+
+# Using Match()
+
+`Person FindPerson(string name);`
+
+↓
+
+`Maybe<Person> FindPerson(string name);`
+
+\-> Success: `Maybe<string>.Just(new Person(…));`
+
+\-> Failure: `Maybe<string>.Nothing();`
+
+
+    TResult Match<TResult>(Func<T, TResult> just, Func<TResult> nothing);
+
+
+    Console.WriteLine(FindPerson("Luke Skywalker")
+        .Match(
+            person => person.Species,
+            () => "Person not found!"
+        )
+    );
+
+---
+
+# Full Maybe<T> API Example
+
+^
+    public interface IApi {
+        Maybe<Person> FindPerson(string name);
+        Maybe<Lightsaber> FindLightsaber(int id);
+    }
+^
+
+    Console.WriteLine(FindPerson("Luke Skywalker")
+        .Match(
+            person => FindLightsaber(person.Lightsaber)
+                .Match(
+                    lightsaber => lightsaber.Color,
+                    () => "Lightsaber not found!"
+                ),
+            () => "Person not found!"
+        )
+    );
+^
+
+\-> Hey Andreas, that's pretty useful, but …
+^
+
+\-> … all this nesting becomes ugly very quickly!
+
+---
+
+# Unleash the power of Bind()
+
+^
+\-> As a monad `Maybe<T>` has to implement `bind()`.
+^
+
+`Maybe<TResult> Bind<TResult>(Func<T, Maybe<TResult>> f);`
+^
+
+
+    Console.WriteLine(FindPerson("Luke Skywalker")
+^
+        .Bind(
+^
+            p => FindLightsaber(p.Lightsaber)
+        )
+^
+        .Match(
+^
+            lightsaber => lightsaber.Color,
+^
+            () => "Lightsaber not found!"
+        )
+    );
+^
+
+\-> Hey Andreas, that's what I'm looking for!
+
+---
+
+# Maybe<T> inside
+
+^
+    public readonly struct Maybe<T> {
+^
+        private T Instance { get; init; }
+^
+        private bool IsJust { get; init; }
+^
+     
+        public static Maybe<T> Just(T instance)
+            => new() { Instance = instance, IsJust = true };
+^
+        public static Maybe<T> Nothing()
+            => new() { IsJust = false };
+^
+     
+        public Maybe<TResult> Bind<TResult>(Func<T, Maybe<TResult>> f)
+            => IsJust ? func(Instance) : Maybe<TResult>.Nothing();
+^
+     
+        public TResult Match<TResult>(Func<T, TResult> j, Func<TResult> n)
+            => IsJust ? j(Instance) : n();
+    }
+
+---
+
+# Is there a real-world implementation?
+
+\-> YES!
+
+https://www.nuget.org/packages/Optional/
+
+## Differences
+
+- `Maybe<T>` is called `Option<T>`
+- `Bind()` is called `FlatMap()`
+- Loads more methods to work with your contained values
+- LINQ query syntax support
+- Provides another monad `Option<T, TException>` (Either-Monad)
+
+---
+
+-> # Thank you!
+
+
+## References
+
+https://github.com/nlkl/Optional
+http://learnyouahaskell.com/a-fistful-of-monads
+https://en.wikipedia.org/wiki/Monad_(functional_programming)
+https://mikhail.io/2018/07/monads-explained-in-csharp-again/
+https://dev.to/niinpatel/
+    what-does-the-phrase-monadic-bind-mean-in-haskell-ie7
+https://adit.io/posts/
+    2013-04-17-functors,_applicatives,_and_monads_in_pictures.html
+http://hackage.haskell.org/
