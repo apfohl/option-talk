@@ -281,6 +281,15 @@ with the contained value
 
 ---
 
+# What problems are we trying to solve?
+
+- Context ✓
+- Composition ✓
+- Side effects ✓
+- NULL ✓
+
+---
+
 # Full Maybe<T> API Example
 
 ^
